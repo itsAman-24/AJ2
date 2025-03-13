@@ -12,26 +12,29 @@ function Auth({ onLogin }) {
     phone: '',
     bloodGroup: 'O+',
     allergies: 'None',
-    emergencyContact: ''
+    emergencyContact: '',
+    role: 'Patient' // Default role for new signups
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+
     if (isLogin) {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find(u => u.email === formData.email && u.password === formData.password);
-      
+      const user = users.find(
+        u => u.email === formData.email && u.password === formData.password
+      );
+
       if (user) {
         onLogin(user);
         toast.success('Logged in successfully!');
+        localStorage.setItem('currentRole', user.role); // Store role in localStorage
         navigate('/');
       } else {
         toast.error('Invalid credentials');
       }
     } else {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      
       if (users.some(user => user.email === formData.email)) {
         toast.error('Email already exists');
         return;
@@ -45,9 +48,10 @@ function Auth({ onLogin }) {
 
       users.push(newUser);
       localStorage.setItem('users', JSON.stringify(users));
-      
+
       onLogin(newUser);
       toast.success('Account created successfully!');
+      localStorage.setItem('currentRole', newUser.role); // Store selected role
       navigate('/profile');
     }
   };
@@ -63,20 +67,37 @@ function Auth({ onLogin }) {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             {!isLogin && (
-              <div>
-                <label htmlFor="name" className="block text-sm mb-2">Full Name</label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required={!isLogin}
-                  className="input text-sm md:text-base"
-                  placeholder="Full Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
+              <>
+                <div>
+                  <label htmlFor="name" className="block text-sm mb-2">Full Name</label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    className="input text-sm md:text-base"
+                    placeholder="Full Name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="role" className="block text-sm mb-2">Select Role</label>
+                  <select
+                    id="role"
+                    name="role"
+                    className="input text-sm md:text-base"
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  >
+                    <option value="Patient">Patient</option>
+                    <option value="Doctor">Doctor</option>
+                  </select>
+                </div>
+              </>
             )}
+
             <div>
               <label htmlFor="email" className="block text-sm mb-2">Email address</label>
               <input
@@ -87,9 +108,10 @@ function Auth({ onLogin }) {
                 className="input text-sm md:text-base"
                 placeholder="Email address"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
+
             <div>
               <label htmlFor="password" className="block text-sm mb-2">Password</label>
               <input
@@ -100,7 +122,7 @@ function Auth({ onLogin }) {
                 className="input text-sm md:text-base"
                 placeholder="Password"
                 value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
           </div>
